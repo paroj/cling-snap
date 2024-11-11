@@ -1,0 +1,45 @@
+name: cling
+version: "1.1"
+confinement: strict
+summary: interactive C++ interpreter
+description: built on top of Clang and LLVM compiler infrastructure. Cling implements the read-eval-print loop (REPL) concept, in order to leverage rapid application development.
+base: core22
+
+apps:
+    cling:
+        command: bin/launcher.sh
+        plugs: [home, removable-media]
+parts:
+    cling:
+        source: https://github.com/root-project/cling.git
+        source-tag: v$SNAPCRAFT_PROJECT_VERSION
+        source-depth: 1
+        plugin: nil
+    llvm:
+        after: [cling]
+        source: https://github.com/root-project/llvm-project.git
+        source-depth: 1
+        source-tag: cling-llvm16
+        source-subdir: llvm
+        plugin: cmake
+        cmake-parameters:
+            - -DCMAKE_BUILD_TYPE=Release
+            - -DCMAKE_INSTALL_PREFIX=/
+            - -DLLVM_ENABLE_PROJECTS="clang"
+            - -DLLVM_TARGETS_TO_BUILD="host;NVPTX"
+            - -DLLVM_EXTERNAL_PROJECTS=cling
+            - -DLLVM_EXTERNAL_CLING_SOURCE_DIR=$SNAPCRAFT_PART_SRC/../../cling/src/
+            - -DLLVM_BUILD_TOOLS=OFF
+            - -DCLING_CXX_PATH="clang++-15"
+            - -DCMAKE_CXX_COMPILER=/usr/bin/clang++-15
+        build-packages:
+            - clang-15
+            - cmake
+            - python3
+        stage-packages:
+            - libstdc++-11-dev
+    launche1r:
+        plugin: dump
+        source: .
+        organize:
+            launcher.sh: bin/
